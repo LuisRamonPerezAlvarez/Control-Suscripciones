@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { authService } from '../services/auth';
 import { useAuth } from '../contexts/AuthContext';
 import '../styles/login.css';
@@ -68,7 +68,7 @@ export default function LoginPage() {
 
         <div className="login-info">
           <p>
-            ¿No tienes cuenta? <a href="/register">Regístrate aquí</a>
+            ¿No tienes cuenta? <Link to="/register">Regístrate aquí</Link>
           </p>
         </div>
       </div>

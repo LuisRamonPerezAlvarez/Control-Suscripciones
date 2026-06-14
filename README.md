@@ -1,7 +1,5 @@
 # Control de Suscripciones
 
-Aplicación full-stack para gestionar suscripciones personales: dashboard con métricas, CRUD de suscripciones, catálogo de servicios y recordatorios visuales basados en la fecha de próximo cobro.
-
 ## Estructura del monorepo
 
 ```
@@ -21,24 +19,8 @@ control-suscripciones/
 
 ### Opción recomendada: script completo
 
-Abre **MySQL Workbench** o **phpMyAdmin** y ejecuta el archivo completo:
-
-```
-backend/sql/full_database.sql
-```
-
-Este script crea:
-
-- Base de datos `control_suscripciones`
-- Tablas: `categorias`, `servicios`, `suscripciones`
-- Funciones: `fn_costo_mensual`, `fn_dias_hasta_cobro`, `fn_estado_recordatorio`
-- Vistas: `v_suscripciones_detalle`, `v_proximos_cobros`
-- Procedimientos almacenados para dashboard, servicios y suscripciones
-- Datos de ejemplo listos para usar
-
 ### Configurar conexión del backend
 
-Copia y edita `backend/.env`:
 
 ```bash
 copy backend\.env.example backend\.env
@@ -50,7 +32,7 @@ DB_HOST=localhost
 DB_PORT=3306
 DB_USER=root
 DB_PASSWORD=tu_password
-DB_NAME=control_suscripciones
+DB_NAME=db_equipo_15
 ```
 
 ### Probar la conexión

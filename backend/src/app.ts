@@ -11,15 +11,21 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-app.get('/api/health', (_req, res) => {
+const apiRouter = express.Router();
+
+apiRouter.get('/health', (_req, res) => {
   res.json({ status: 'ok', message: 'Control de Suscripciones API' });
 });
 
-app.use('/api/auth', authRoutes);
-app.use('/api/dashboard', dashboardRoutes);
-app.use('/api/categorias', categoriasRoutes);
-app.use('/api/servicios', serviciosRoutes);
-app.use('/api/suscripciones', suscripcionesRoutes);
+apiRouter.use('/auth', authRoutes);
+apiRouter.use('/dashboard', dashboardRoutes);
+apiRouter.use('/categorias', categoriasRoutes);
+apiRouter.use('/servicios', serviciosRoutes);
+apiRouter.use('/suscripciones', suscripcionesRoutes);
+
+app.use('/', apiRouter);
+app.use('/api', apiRouter);
+app.use('/equipo_15/api', apiRouter);
 
 app.use((_req, res) => {
   res.status(404).json({ error: 'Ruta no encontrada' });

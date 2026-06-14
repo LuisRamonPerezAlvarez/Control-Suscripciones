@@ -1,4 +1,5 @@
-const API_BASE = '/api';
+const BASE = import.meta.env.BASE_URL || '/';
+const API_BASE = `${BASE}api`;
 const TOKEN_KEY = 'auth_token';
 
 export interface LoginResponse {

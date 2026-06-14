@@ -88,15 +88,7 @@ export async function register(req: Request, res: Response): Promise<void> {
     );
 
     const userId = result.insertId;
-    const token = crypto.randomBytes(32).toString('hex');
-    const expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24); // 24 horas
-
-    await pool.query(
-      'INSERT INTO auth_tokens (user_id, token, expires_at) VALUES (?, ?, ?)',
-      [userId, token, expiresAt],
-    );
-
-    res.status(201).json({ token, username: trimmedUsername });
+    res.status(201).json({ message: 'Usuario creado exitosamente', username: trimmedUsername });
   } catch (error) {
     console.error('Error en registro:', error);
     res.status(500).json({ error: 'Error al crear el usuario' });

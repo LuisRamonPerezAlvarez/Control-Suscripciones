@@ -10,11 +10,11 @@ SET FOREIGN_KEY_CHECKS = 0;
 -- -----------------------------------------------------------------------------
 -- 1. BASE DE DATOS
 -- -----------------------------------------------------------------------------
-CREATE DATABASE IF NOT EXISTS db_equipo_05
+CREATE DATABASE IF NOT EXISTS db_equipo_15
   CHARACTER SET utf8mb4
   COLLATE utf8mb4_unicode_ci;
 
-USE db_equipo_05;
+USE db_equipo_15;
 
 -- -----------------------------------------------------------------------------
 -- 2. ELIMINAR OBJETOS EXISTENTES (orden inverso de dependencias)
@@ -35,9 +35,7 @@ DROP PROCEDURE IF EXISTS sp_dashboard_resumen;
 DROP VIEW IF EXISTS v_proximos_cobros;
 DROP VIEW IF EXISTS v_suscripciones_detalle;
 
-DROP FUNCTION IF EXISTS fn_estado_recordatorio;
-DROP FUNCTION IF EXISTS fn_dias_hasta_cobro;
-DROP FUNCTION IF EXISTS fn_costo_mensual;
+-- Funciones eliminadas por restricción de Hostinger
 
 DROP TABLE IF EXISTS auth_tokens;
 DROP TABLE IF EXISTS usuarios;
@@ -126,51 +124,7 @@ CREATE TABLE suscripciones (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- -----------------------------------------------------------------------------
--- 4. FUNCIONES AUXILIARES
--- -----------------------------------------------------------------------------
-
-DELIMITER $$
-
-CREATE FUNCTION fn_costo_mensual(
-  p_costo DECIMAL(10,2),
-  p_frecuencia ENUM('semanal','mensual','trimestral','semestral','anual')
-) RETURNS DECIMAL(10,2)
-DETERMINISTIC
-READS SQL DATA
-BEGIN
-  CASE p_frecuencia
-    WHEN 'semanal'    THEN RETURN ROUND(p_costo * 4.33, 2);
-    WHEN 'mensual'    THEN RETURN p_costo;
-    WHEN 'trimestral' THEN RETURN ROUND(p_costo / 3, 2);
-    WHEN 'semestral'  THEN RETURN ROUND(p_costo / 6, 2);
-    WHEN 'anual'      THEN RETURN ROUND(p_costo / 12, 2);
-    ELSE RETURN p_costo;
-  END CASE;
-END$$
-
-CREATE FUNCTION fn_dias_hasta_cobro(p_fecha DATE) RETURNS INT
-DETERMINISTIC
-NO SQL
-BEGIN
-  RETURN DATEDIFF(p_fecha, CURDATE());
-END$$
-
-CREATE FUNCTION fn_estado_recordatorio(p_fecha DATE) RETURNS VARCHAR(10)
-DETERMINISTIC
-NO SQL
-BEGIN
-  DECLARE v_dias INT;
-  SET v_dias = DATEDIFF(p_fecha, CURDATE());
-  IF v_dias <= 0 THEN
-    RETURN 'rojo';
-  ELSEIF v_dias <= 7 THEN
-    RETURN 'amarillo';
-  ELSE
-    RETURN 'verde';
-  END IF;
-END$$
-
-DELIMITER ;
+-- Funciones eliminadas para compatibilidad en Hostinger
 
 -- -----------------------------------------------------------------------------
 -- 5. VISTAS
@@ -188,9 +142,20 @@ SELECT
   s.activa,
   sv.nombre AS servicio_nombre,
   c.nombre AS categoria_nombre,
-  fn_costo_mensual(s.costo, s.frecuencia) AS costo_mensual,
-  fn_dias_hasta_cobro(s.fecha_proximo_cobro) AS dias_restantes,
-  fn_estado_recordatorio(s.fecha_proximo_cobro) AS estado_recordatorio
+  CASE s.frecuencia
+    WHEN 'semanal'    THEN ROUND(s.costo * 4.33, 2)
+    WHEN 'mensual'    THEN s.costo
+    WHEN 'trimestral' THEN ROUND(s.costo / 3, 2)
+    WHEN 'semestral'  THEN ROUND(s.costo / 6, 2)
+    WHEN 'anual'      THEN ROUND(s.costo / 12, 2)
+    ELSE s.costo
+  END AS costo_mensual,
+  DATEDIFF(s.fecha_proximo_cobro, CURDATE()) AS dias_restantes,
+  CASE 
+    WHEN DATEDIFF(s.fecha_proximo_cobro, CURDATE()) <= 0 THEN 'rojo'
+    WHEN DATEDIFF(s.fecha_proximo_cobro, CURDATE()) <= 7 THEN 'amarillo'
+    ELSE 'verde'
+  END AS estado_recordatorio
 FROM suscripciones s
 LEFT JOIN servicios sv ON s.servicio_id = sv.id
 LEFT JOIN categorias c ON sv.categoria_id = c.id;
@@ -223,9 +188,27 @@ CREATE PROCEDURE sp_dashboard_resumen()
 BEGIN
   SELECT
     COUNT(*) AS total_activas,
-    ROUND(COALESCE(SUM(fn_costo_mensual(costo, frecuencia)), 0), 2) AS gasto_mensual_total,
-    ROUND(COALESCE(SUM(fn_costo_mensual(costo, frecuencia)), 0) * 12, 2) AS gasto_anual_estimado,
-    SUM(CASE WHEN fn_dias_hasta_cobro(fecha_proximo_cobro) <= 7 THEN 1 ELSE 0 END) AS proximas_a_vencer
+    ROUND(COALESCE(SUM(
+      CASE frecuencia
+        WHEN 'semanal'    THEN costo * 4.33
+        WHEN 'mensual'    THEN costo
+        WHEN 'trimestral' THEN costo / 3
+        WHEN 'semestral'  THEN costo / 6
+        WHEN 'anual'      THEN costo / 12
+        ELSE costo
+      END
+    ), 0), 2) AS gasto_mensual_total,
+    ROUND(COALESCE(SUM(
+      CASE frecuencia
+        WHEN 'semanal'    THEN costo * 4.33
+        WHEN 'mensual'    THEN costo
+        WHEN 'trimestral' THEN costo / 3
+        WHEN 'semestral'  THEN costo / 6
+        WHEN 'anual'      THEN costo / 12
+        ELSE costo
+      END
+    ), 0) * 12, 2) AS gasto_anual_estimado,
+    SUM(CASE WHEN DATEDIFF(fecha_proximo_cobro, CURDATE()) <= 7 THEN 1 ELSE 0 END) AS proximas_a_vencer
   FROM suscripciones
   WHERE activa = 1;
 END$$

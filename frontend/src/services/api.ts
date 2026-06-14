@@ -8,7 +8,8 @@ import type {
 } from '../types';
 import { authService } from './auth';
 
-const API_BASE = '/api';
+const BASE = import.meta.env.BASE_URL || '/';
+const API_BASE = `${BASE}api`;
 
 async function request<T>(url: string, options?: RequestInit): Promise<T> {
   const token = authService.getToken();

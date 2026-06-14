@@ -1,12 +1,10 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { authService } from '../services/auth';
-import { useAuth } from '../contexts/AuthContext';
 import '../styles/login.css';
 
 export default function RegisterPage() {
   const navigate = useNavigate();
-  const { login } = useAuth();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -29,9 +27,9 @@ export default function RegisterPage() {
 
     setLoading(true);
     try {
-      const response = await authService.register(username.trim(), password);
-      login(response.token);
-      navigate('/');
+      await authService.register(username.trim(), password);
+      alert('Registro exitoso. Ahora puedes iniciar sesión con tu cuenta.');
+      navigate('/login');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error desconocido');
     } finally {
